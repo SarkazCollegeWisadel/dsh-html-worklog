@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>教材音频 → 插画短视频 · 工作笔记</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#111319;--panel:#181b23;--panel2:#1d212b;--line:#2a3040;--fg:#e6e8ee;--muted:#98a1af;--acc:#5ac8fa}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;padding:0 0 56px;background:var(--bg);color:var(--fg);font:15px/1.7 -apple-system,"Segoe UI","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif}
+h1{font-size:18px;margin:0 0 2px;font-weight:600}
+.mono,code{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;font-size:.92em;overflow-wrap:anywhere}
+.hero{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 18px 12px;max-height:40vh;overflow:auto}
+.row{display:flex;flex-wrap:wrap;gap:4px 14px;color:var(--muted);font-size:14px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 18px}
+.grid h2{font-size:14px;color:var(--acc);margin:0 0 4px;font-weight:600}
+.grid ul,.grid ol{margin:0;padding-left:1.2em}
+.grid li{font-size:14px;margin:2px 0}
+.sub{display:block;color:var(--muted)}
+details.sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:14px 18px}
+details.sec>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px;font-size:15px;font-weight:600}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary .count{color:var(--muted);font-weight:400;font-size:14px}
+details.sec[open]>summary{border-bottom:1px solid var(--line)}
+.body{padding:4px 16px 14px;max-width:78ch}
+.card{background:var(--panel2);border-left:2px solid var(--acc);border-radius:8px;padding:10px 12px;margin:10px 0}
+.card h3{font-size:15px;margin:0 0 4px;font-weight:600}
+.meta{color:var(--muted);font-size:14px;margin:0 0 4px}
+.card p{margin:4px 0}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 9px;margin-left:6px;font-size:14px;color:var(--muted)}
+.chip.acc{border-color:var(--acc);color:var(--acc)}
+ul.todo,ul.tl{list-style:none;margin:0;padding:0}
+ul.todo li{padding:9px 0;border-bottom:1px dashed var(--line)}
+ul.todo li:last-child{border-bottom:0}
+ul.tl li{border-left:2px solid var(--line);padding:2px 0 10px 14px;position:relative}
+ul.tl li:last-child{padding-bottom:2px}
+ul.tl li::before{content:"";position:absolute;left:-5px;top:9px;width:8px;height:8px;border-radius:50%;background:var(--acc)}
+.tl-t{display:block;color:var(--muted);font-size:14px}
+.box{font-size:14px;color:var(--muted);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;margin:14px 18px}
+footer{color:var(--muted);font-size:14px;padding:18px;max-width:78ch}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="box" id="boot-error" hidden></div>
+<noscript><div class="box">本页需要 JavaScript 才能渲染。数据在 <code>#worklog-data</code> 里，关掉脚本只会看到空白，请用浏览器直接打开本文件。</div></noscript>
+
+<header class="hero">
+  <h1 id="w-title">工作笔记</h1>
+  <div class="row">
+    <span>最近更新 <time id="w-updated"></time></span>
+    <span>负责人 <span id="w-owner"></span></span>
+    <span>工作区 <span class="mono" id="w-workspace"></span></span>
+    <span>时区 <span id="w-tz"></span></span>
+  </div>
+  <div class="grid">
+    <section><h2>当前断点</h2><ol id="w-bp"></ol></section>
+    <section><h2>这一轮做完</h2><ul id="w-done"></ul></section>
+    <section><h2>这一轮没做完</h2><ul id="w-notdone"></ul></section>
+  </div>
+</header>
+
+<main>
+  <details class="sec" id="sec-breakpoints" open>
+    <summary><span>断点</span><span class="count" id="c-breakpoints"></span></summary>
+    <div class="body" id="b-breakpoints"></div>
+  </details>
+  <details class="sec" id="sec-ledger">
+    <summary><span>台账</span><span class="count" id="c-ledger"></span></summary>
+    <div class="body" id="b-ledger"></div>
+  </details>
+  <details class="sec" id="sec-todos">
+    <summary><span>待办</span><span class="count" id="c-todos"></span></summary>
+    <div class="body" id="b-todos"></div>
+  </details>
+  <details class="sec" id="sec-timeline">
+    <summary><span>时间线</span><span class="count" id="c-timeline"></span></summary>
+    <div class="body" id="b-timeline"></div>
+  </details>
+</main>
+
+<footer>本文件自包含：无外链、无 CDN、无字体下载。数据段在 <code>&lt;script id="worklog-data"&gt;</code>，改数据即改笔记；更新方式是整文件重写，不是追加。</footer>
+
+<script id="worklog-data" type="application/json">
+{
+  "meta": {
+    "title": "教材音频 → 插画短视频 · 工作笔记",
+    "project": "textbook-audio-to-shorts",
+    "owner": "EXAMPLE_USER",
+    "agent": "EXAMPLE_AGENT",
+    "workspace": "D:\\EXAMPLE\\project",
+    "updated_at": "2026-03-02T21:40:00+08:00",
+    "timezone": "Asia/Shanghai (UTC+08:00)",
+    "round": {
+      "done": [
+        "第 1-3 课音频切成 42 个句子级片段并做响度归一化",
+        "字幕对齐与视频合成的最小闭环跑通（冒烟样片 12.4s）",
+        "3 张插画风格候选图已出，缩到 320px 并排比对"
+      ],
+      "not_done": [
+        "插画风格基准母版未拍板，批量出图卡在这里",
+        "第 4-6 课音频还没切片",
+        "第 17-19 条字幕时间轴偏移未修"
+      ]
+    }
+  },
+  "breakpoints": [
+    {
+      "at": "2026-03-02T21:40:00+08:00",
+      "action": "定插画基准母版",
+      "target": "D:\\EXAMPLE\\project\\style\\baseline.md",
+      "verify": "用同一句旁白出 3 张候选，缩到 320px 并排比对，把差异写进 baseline.md 后再拍板"
+    },
+    {
+      "at": "2026-03-02T21:40:00+08:00",
+      "action": "修第 17-19 条字幕时间轴偏移",
+      "target": "D:\\EXAMPLE\\project\\out\\lesson01.srt",
+      "verify": "三条各减 0.4s，用播放器核 3 处口型对齐后重新导出"
+    },
+    {
+      "at": "2026-03-02T21:40:00+08:00",
+      "action": "切第 4-6 课音频",
+      "target": "scripts\\slice.py --lessons 4-6 --out D:\\EXAMPLE\\project\\audio\\raw",
+      "verify": "片段数写进台账，抽样 5 段听首尾有没有被截断"
+    }
+  ],
+  "ledger": [
+    {
+      "item": "句子级音频切片",
+      "status": "已交付",
+      "evidence": "scripts\\slice.py 跑通第 1 课，产出 audio\\raw\\lesson01 共 42 段（mtime 2026-03-02T19:12+08:00）",
+      "at": "2026-03-02T19:12:00+08:00"
+    },
+    {
+      "item": "响度归一化",
+      "status": "已交付",
+      "evidence": "loudnorm 参数写进 scripts\\normalize.sh，批处理日志 logs\\norm-2026-03-02.log 末行 ok 42/42",
+      "at": "2026-03-02T19:40:00+08:00"
+    },
+    {
+      "item": "字幕生成",
+      "status": "进行中",
+      "evidence": "out\\lesson01.srt 已出 42 条；第 17-19 条时间轴 +0.4s 偏移待修",
+      "at": "2026-03-02T20:05:00+08:00"
+    },
+    {
+      "item": "视频合成闭环",
+      "status": "已交付",
+      "evidence": "out\\smoke\\smoke.mp4，ffprobe 报 duration=12.4、1 条视频流 + 1 条音频流",
+      "at": "2026-03-02T20:15:00+08:00"
+    },
+    {
+      "item": "插画风格候选",
+      "status": "受阻",
+      "evidence": "style\\cand\\ 下 3 张候选图（并排版 style\\cand\\compare.png），等待 EXAMPLE_USER 拍板",
+      "at": "2026-03-02T21:10:00+08:00"
+    },
+    {
+      "item": "插画基准母版",
+      "status": "未开始",
+      "evidence": "无产物；阻塞在候选图未拍板",
+      "at": "2026-03-02T21:40:00+08:00"
+    }
+  ],
+  "todos": [
+    {
+      "text": "从 3 张候选里挑 1 张定为基准母版",
+      "owner": "EXAMPLE_USER",
+      "blocked_by": "",
+      "done_when": "文件名写进 style\\chosen.txt"
+    },
+    {
+      "text": "修第 17-19 条字幕时间轴偏移",
+      "owner": "EXAMPLE_AGENT",
+      "blocked_by": "",
+      "done_when": "重新导出 srt 并核 3 处口型"
+    },
+    {
+      "text": "切第 4-6 课音频并归一化",
+      "owner": "EXAMPLE_AGENT",
+      "blocked_by": "",
+      "done_when": "audio\\raw\\lesson04-06 产出，片段数入台账"
+    },
+    {
+      "text": "决定旁白是否加背景音乐",
+      "owner": "EXAMPLE_USER",
+      "blocked_by": "版权清单未核",
+      "done_when": "结论写进 decisions.md"
+    },
+    {
+      "text": "把冒烟校验固化成 check.py",
+      "owner": "EXAMPLE_AGENT",
+      "blocked_by": "",
+      "done_when": "脚本能对任意成片报出时长/帧数/流数量是否达标"
+    }
+  ],
+  "timeline": [
+    { "at": "2026-03-02T09:05:00+08:00", "event": "立项，交付形态定为 90 秒竖版短视频", "kind": "决策" },
+    { "at": "2026-03-02T11:30:00+08:00", "event": "音频切片粒度定为句子级，不用等长切", "kind": "决策" },
+    { "at": "2026-03-02T14:05:00+08:00", "event": "切片脚本跑通第 1 课，得 42 段", "kind": "交付" },
+    { "at": "2026-03-02T16:20:00+08:00", "event": "响度归一化批处理完成 42/42", "kind": "交付" },
+    { "at": "2026-03-02T18:40:00+08:00", "event": "字幕对齐发现第 17-19 条偏移 +0.4s，记为待修", "kind": "失败" },
+    { "at": "2026-03-02T20:15:00+08:00", "event": "合成闭环冒烟通过，样片 12.4s", "kind": "交付" },
+    { "at": "2026-03-02T21:40:00+08:00", "event": "本轮收工，断点与待办已写", "kind": "交接" }
+  ]
+}
+</script>
+
+<script>
+(function () {
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, txt) {
+    var n = document.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (txt != null) { n.textContent = txt; }
+    return n;
+  }
+  function fail(msg) {
+    var b = $('boot-error');
+    if (!b) { return; }
+    b.hidden = false;
+    b.textContent = '渲染中止：' + msg;
+  }
+  function when(iso) { return String(iso || '').replace('T', ' '); }
+
+  var holder = $('worklog-data');
+  if (!holder) { fail('找不到 #worklog-data'); return; }
+
+  var data;
+  try {
+    data = JSON.parse(holder.textContent);
+  } catch (err) {
+    fail('worklog-data 不是合法 JSON（' + err.message + '）');
+    return;
+  }
+
+  var need = ['meta', 'breakpoints', 'ledger', 'todos', 'timeline'];
+  for (var i = 0; i < need.length; i++) {
+    if (!data[need[i]]) { fail('缺少顶层键 ' + need[i]); return; }
+  }
+
+  $('w-title').textContent = data.meta.title || '工作笔记';
+  $('w-updated').textContent = when(data.meta.updated_at);
+  $('w-updated').setAttribute('datetime', data.meta.updated_at || '');
+  $('w-owner').textContent = data.meta.owner || '—';
+  $('w-workspace').textContent = data.meta.workspace || '—';
+  $('w-tz').textContent = data.meta.timezone || '—';
+
+  var round = data.meta.round || { done: [], not_done: [] };
+  data.breakpoints.slice(0, 3).forEach(function (b) {
+    var li = el('li');
+    li.appendChild(el('span', null, b.action));
+    li.appendChild(el('span', 'sub', '落点 ' + b.target));
+    $('w-bp').appendChild(li);
+  });
+  (round.done || []).forEach(function (t) { $('w-done').appendChild(el('li', null, t)); });
+  (round.not_done || []).forEach(function (t) { $('w-notdone').appendChild(el('li', null, t)); });
+
+  data.breakpoints.forEach(function (b) {
+    var c = el('div', 'card');
+    c.appendChild(el('h3', null, b.action));
+    c.appendChild(el('p', 'meta', '更新 ' + when(b.at)));
+    var t = el('p');
+    t.appendChild(el('span', 'mono', '落点 ' + b.target));
+    c.appendChild(t);
+    c.appendChild(el('p', null, '验收 ' + b.verify));
+    $('b-breakpoints').appendChild(c);
+  });
+  $('c-breakpoints').textContent = data.breakpoints.length + ' 条';
+
+  data.ledger.forEach(function (r) {
+    var c = el('div', 'card');
+    var h = el('h3', null, r.item);
+    h.appendChild(el('span', 'chip' + (r.status === '已交付' ? ' acc' : ''), r.status));
+    c.appendChild(h);
+    c.appendChild(el('p', 'meta', '记录 ' + when(r.at)));
+    var e = el('p');
+    e.appendChild(el('span', 'mono', r.evidence));
+    c.appendChild(e);
+    $('b-ledger').appendChild(c);
+  });
+  $('c-ledger').textContent = data.ledger.length + ' 条';
+
+  data.todos.forEach(function (t) {
+    var li = el('li', null, '☐ ' + t.text);
+    li.appendChild(el('span', 'chip', t.owner || '待定'));
+    if (t.blocked_by) { li.appendChild(el('span', 'chip', '阻塞：' + t.blocked_by)); }
+    $('b-todos').appendChild(li);
+  });
+  $('c-todos').textContent = data.todos.length + ' 条';
+
+  data.timeline.forEach(function (t) {
+    var li = el('li');
+    li.appendChild(el('span', 'tl-t', when(t.at)));
+    li.appendChild(el('span', null, t.event));
+    li.appendChild(el('span', 'chip', t.kind || ''));
+    $('b-timeline').appendChild(li);
+  });
+  $('c-timeline').textContent = data.timeline.length + ' 条';
+
+  var scope = 'worklog.collapsed.' + (data.meta.project || 'default') + '.';
+  Array.prototype.forEach.call(document.querySelectorAll('details.sec'), function (d) {
+    try {
+      var saved = localStorage.getItem(scope + d.id);
+      if (saved === '0') { d.open = true; }
+      else if (saved === '1') { d.open = false; }
+    } catch (e) { /* 存储被禁用时退回默认展开 */ }
+    d.addEventListener('toggle', function () {
+      try {
+        localStorage.setItem(scope + d.id, d.open ? '0' : '1');
+        localStorage.setItem('worklog.lastOpened', data.meta.updated_at || '');
+      } catch (e) { /* 同上 */ }
+    });
+  });
+})();
+</script>
+</body>
+</html>
